@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Scoreboard">
+    <meta name="theme-color" content="#000000">
+    <title>Scoreboard</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-512.svg">
+    <style>
+        :root {
+            /* Standard Athletic Team Colors (Glow OFF - Reference Image Style) */
+            --blue-flat: #0F3FC9;
+            --red-flat: #DE1818;
+            --green-flat: #1C9F3D;
+            --yellow-flat: #D69E0A;
+
+            /* Luminous Neon Glow Colors (Glow ON) */
+            --blue-core: #2664FF;
+            --blue-bright: #70A2FF;
+            --blue-ambient: rgba(38, 100, 255, 0.75);
+
+            --red-core: #FF2A2A;
+            --red-bright: #FFA0A0;
+            --red-ambient: rgba(255, 42, 42, 0.75);
+
+            --green-core: #1DD850;
+            --green-bright: #88FFAC;
+            --green-ambient: rgba(29, 216, 80, 0.75);
+
+            --yellow-core: #FFD41F;
+            --yellow-bright: #FFF294;
+            --yellow-ambient: rgba(255, 212, 31, 0.75);
+
+            /* Apple Liquid Glass Material Tokens */
+            --glass-sheen: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.08) 40%, rgba(180, 220, 255, 0.15) 60%, rgba(255, 255, 255, 0.22) 100%);
+            --glass-rim-top: rgba(255, 255, 255, 0.95);
+            --glass-rim-side: rgba(255, 255, 255, 0.4);
+            --glass-rim-bottom: rgba(0, 0, 0, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.32);
+            --ios-green: #34C759;
+            --ios-blue: #007AFF;
+        }
+
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Rounded', system-ui, sans-serif;
+        }
+
+        body {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+        }
+
+        /* ===== ATMOSPHERIC AMBIENT LIQUID ORBS (Reveals Glass Refraction) ===== */
+        .ambient-glass-glows {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(85px);
+            opacity: 0.6;
+            animation: floatLiquidOrb 10s ease-in-out infinite alternate;
+        }
+        .orb-red {
+            width: 350px; height: 350px;
+            background: radial-gradient(circle, #ff2a4b 0%, #a80016 60%, transparent 100%);
+            top: 5%; left: -80px;
+        }
+        .orb-blue {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, #2a75ff 0%, #00289e 60%, transparent 100%);
+            bottom: 5%; right: -90px;
+            animation-delay: -4s;
+        }
+        .orb-violet {
+            width: 320px; height: 320px;
+            background: radial-gradient(circle, #b833ff 0%, #44007a 60%, transparent 100%);
+            top: 40%; left: 30%;
+            animation-delay: -7s;
+        }
+        @keyframes floatLiquidOrb {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(45px, 25px) scale(1.15) rotate(15deg); }
+            100% { transform: translate(-30px, 45px) scale(0.92) rotate(-10deg); }
+        }
+
+        /* ===== SCREENS ===== */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1), transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: scale(0.98);
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            z-index: 2;
+        }
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+            z-index: 10;
+        }
+        .screen.fade-out {
+            opacity: 0;
+            transform: scale(1.02);
+        }
+
+        /* ==========================================================================
+           🧊 TRUE APPLE LIQUID GLASS BUTTONS (VISCOUS MENISCUS + OPTICAL CAUSTICS)
+           ========================================================================== */
+        .glass-btn {
+            position: relative;
+            background: var(--glass-sheen);
+            border: 1.2px solid rgba(255, 255, 255, 0.45);
+            border-radius: 26px;
+            color: #FFFFFF;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 2.2px;
+            padding: 22px 56px;
+            min-width: 290px;
+            cursor: pointer;
+            transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, opacity 0.15s ease;
+            backdrop-filter: blur(40px) saturate(230%) brightness(110%);
+            -webkit-backdrop-filter: blur(40px) saturate(230%) brightness(110%);
+            
+            /* Physical 3D Liquid Glass Caustic Bevel & Light Pools */
+            box-shadow:
+                /* Razor-sharp upper meniscus specular reflection */
+                inset 0 2px 1.5px var(--glass-rim-top),
+                /* Deep refraction bottom shadow inside the glass */
+                inset 0 -3px 4px var(--glass-rim-bottom),
+                /* Prismatic chromatic dispersion edge fringes */
+                inset 2px 0 3px rgba(255, 130, 160, 0.4),
+                inset -2px 0 3px rgba(100, 200, 255, 0.5),
+                /* Caustic colored light pool cast onto surface behind */
+                0 12px 35px rgba(60, 130, 255, 0.28),
+                /* Deep floating contact shadow */
+                0 22px 50px rgba(0, 0, 0, 0.75),
+                0 4px 14px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            text-align: center;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+            z-index: 5;
+        }
+
+        /* Curved Liquid Lens Meniscus (Upper Specular Glare) */
+        .glass-btn::before {
+            content: '';
+            position: absolute;
+            top: 2px; left: 3px; right: 3px;
+            height: 48%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.22) 55%, rgba(255, 255, 255, 0) 100%);
+            border-radius: 24px 24px 90px 90px / 24px 24px 30px 30px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* Bottom Secondary Liquid Bounce Reflection */
+        .glass-btn-bounce {
+            position: absolute;
+            bottom: 2px; left: 20%; right: 20%;
+            height: 14%;
+            background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.45) 0%, transparent 80%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* Living Liquid Caustic Shimmer Sweep */
+        .glass-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -140%; width: 70%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), rgba(180, 225, 255, 0.3), transparent);
+            transform: skewX(-25deg);
+            transition: left 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+            z-index: 3;
+        }
+        .glass-btn:hover::after, .glass-btn:active::after {
+            left: 170%;
+        }
+        .glass-btn:active {
+            transform: scale(0.95);
+            box-shadow:
+                inset 0 1.2px 1px var(--glass-rim-top),
+                inset 0 -1.5px 2px var(--glass-rim-bottom),
+                0 10px 24px rgba(0, 0, 0, 0.7);
+            opacity: 0.92;
+        }
+
+        /* Interactive Liquid Ripple (Expands on Click/Tap) */
+        .liquid-ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0%, rgba(160, 215, 255, 0.35) 45%, transparent 70%);
+            transform: scale(0);
+            animation: liquidRippleAnim 0.55s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+            pointer-events: none;
+            z-index: 4;
+        }
+        @keyframes liquidRippleAnim {
+            to {
+                transform: scale(4.5);
+                opacity: 0;
+            }
+        }
+
+        /* Small Liquid Glass Pill Buttons (Back, Reset, Scores) */
+        .glass-btn-small {
+            position: relative;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.07) 50%, rgba(180, 220, 255, 0.15) 100%);
+            border: 1.2px solid rgba(255, 255, 255, 0.42);
+            border-radius: 16px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 9px 18px;
+            cursor: pointer;
+            transition: transform 0.12s ease, opacity 0.12s ease;
+            backdrop-filter: blur(32px) saturate(220%);
+            -webkit-backdrop-filter: blur(32px) saturate(220%);
+            box-shadow:
+                inset 0 1.5px 1px rgba(255, 255, 255, 0.9),
+                inset 0 -1.5px 2px rgba(0, 0, 0, 0.45),
+                inset 1px 0 2px rgba(255, 140, 170, 0.35),
+                inset -1px 0 2px rgba(120, 200, 255, 0.35),
+                0 8px 20px rgba(0, 0, 0, 0.55);
+            display: flex; align-items: center; gap: 6px;
+            overflow: hidden;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+            z-index: 20;
+        }
+        .glass-btn-small::before {
+            content: '';
+            position: absolute;
+            top: 1px; left: 2px; right: 2px;
+            height: 46%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.08) 100%);
+            border-radius: 14px 14px 45px 45px / 14px 14px 18px 18px;
+            pointer-events: none;
+        }
+        .glass-btn-small:active {
+            transform: scale(0.92);
+            opacity: 0.85;
+        }
+
+        /* ===== MAIN MENU ===== */
+        #mainMenu {
+            background: radial-gradient(circle at 50% 30%, #151522 0%, #08080f 65%, #000000 100%);
+        }
+        .menu-title-container {
+            text-align: center;
+            margin-bottom: 46px;
+            z-index: 5;
+        }
+        .menu-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 2.2px;
+            text-transform: uppercase;
+            color: #ff5252;
+            background: rgba(255, 82, 82, 0.15);
+            border: 1px solid rgba(255, 82, 82, 0.35);
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 0 20px rgba(255, 82, 82, 0.3);
+            padding: 5px 16px;
+            border-radius: 20px;
+            margin-bottom: 14px;
+            backdrop-filter: blur(14px);
+        }
+        .menu-title {
+            font-size: 48px;
+            font-weight: 900;
+            letter-spacing: 3.5px;
+            background: linear-gradient(180deg, #FFFFFF 0%, #B8B8CE 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 28px rgba(255, 255, 255, 0.25);
+        }
+        .menu-buttons {
+            display: flex; flex-direction: column; gap: 20px;
+            z-index: 5;
+        }
+
+        /* ===== TEAM SELECTION ===== */
+        #teamSelection {
+            background: radial-gradient(circle at 50% 30%, #151522 0%, #08080f 65%, #000000 100%);
+        }
+        .selection-title {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 40px;
+            color: #FFFFFF;
+            z-index: 5;
+            text-shadow: 0 2px 18px rgba(255,255,255,0.2);
+        }
+        .selection-buttons {
+            display: flex; flex-direction: column; gap: 20px;
+            z-index: 5;
+        }
+
+        /* ===== NAVIGATION HEADER ===== */
+        .nav-header {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: max(14px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) 12px max(18px, env(safe-area-inset-left));
+            z-index: 25;
+            background: linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0) 100%);
+            pointer-events: auto;
+        }
+        .nav-header-title {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            color: #FFFFFF;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        }
+
+        /* ===== APPLE iOS 18 SETTINGS (LIQUID GLASS CARDS) ===== */
+        #settings {
+            justify-content: flex-start;
+            padding-top: max(72px, calc(env(safe-area-inset-top) + 52px));
+            padding-bottom: max(28px, env(safe-area-inset-bottom));
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            background: #000000;
+        }
+        .settings-scroll-container {
+            width: min(520px, 92vw);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            padding-bottom: 40px;
+            z-index: 5;
+        }
+        .settings-section-title {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: rgba(235, 235, 245, 0.65);
+            margin-left: 16px;
+            margin-bottom: 8px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+        }
+
+        /* Frosted Crystal Grouped Cards with Specular Lens Glare */
+        .settings-group {
+            position: relative;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 40%, rgba(24, 24, 28, 0.9) 100%);
+            border: 1.2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 24px;
+            backdrop-filter: blur(45px) saturate(220%);
+            -webkit-backdrop-filter: blur(45px) saturate(220%);
+            overflow: hidden;
+            box-shadow:
+                inset 0 1.8px 1px rgba(255, 255, 255, 0.75),
+                inset 0 -2px 3px rgba(0, 0, 0, 0.55),
+                0 18px 45px rgba(0, 0, 0, 0.65);
+        }
+        .settings-group::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 38%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 18px;
+            min-height: 58px;
+            position: relative;
+            z-index: 2;
+        }
+        .setting-row + .setting-row {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .setting-info {
+            display: flex; align-items: center; gap: 14px;
+            flex: 1; padding-right: 12px;
+        }
+        .setting-icon-badge {
+            width: 34px; height: 34px;
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.5);
+        }
+        .icon-glow-badge { background: linear-gradient(135deg, #AF52DE 0%, #5856D6 100%); }
+        .icon-timer-badge { background: linear-gradient(135deg, #FF9500 0%, #FF5E3A 100%); }
+        .icon-sound-badge { background: linear-gradient(135deg, #34C759 0%, #30B0C7 100%); }
+        .icon-reset-badge { background: linear-gradient(135deg, #FF3B30 0%, #D70015 100%); }
+
+        .setting-texts {
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        .setting-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #FFFFFF;
+        }
+        .setting-subtitle {
+            font-size: 12px;
+            color: rgba(235, 235, 245, 0.58);
+        }
+
+        /* Apple iOS Native Toggle Switch with Specular Bevel */
+        .ios-toggle {
+            position: relative;
+            width: 51px; height: 31px;
+            background: rgba(120, 120, 128, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: background 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
+            flex-shrink: 0;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+        }
+        .ios-toggle.on {
+            background: var(--ios-green);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 16px rgba(52, 199, 89, 0.55), inset 0 1px 1px rgba(255,255,255,0.5);
+        }
+        .ios-toggle-knob {
+            position: absolute;
+            top: 2px; left: 2px;
+            width: 25px; height: 25px;
+            background: linear-gradient(180deg, #FFFFFF 0%, #E8E8ED 100%);
+            border-radius: 50%;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35), 0 1px 1px rgba(0, 0, 0, 0.2);
+            transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .ios-toggle.on .ios-toggle-knob {
+            transform: translateX(20px);
+        }
+
+        /* Live Glow Preview Box inside Settings */
+        .glow-preview-box {
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.45);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            z-index: 2;
+        }
+        .glow-preview-label {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.55);
+        }
+        .preview-mini-stage {
+            display: flex;
+            height: 92px;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1.2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.5);
+            position: relative;
+        }
+        .preview-mini-stage::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 42%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 100%);
+            pointer-events: none;
+            z-index: 4;
+        }
+        .preview-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .preview-side.blue { background: var(--blue-flat); }
+        .preview-side.red { background: var(--red-flat); }
+        .preview-score {
+            font-size: 34px;
+            font-weight: 900;
+            color: #FFFFFF;
+            transition: all 0.3s ease;
+        }
+        .preview-tag {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.85);
+            position: absolute;
+            top: 6px;
+        }
+
+        /* Glow Preview Active State */
+        .preview-active .preview-side.blue {
+            background: radial-gradient(circle at center, #2e6eff 0%, #1545d8 60%, #0a258a 100%) !important;
+            box-shadow: inset 0 0 25px rgba(112, 162, 255, 0.85);
+        }
+        .preview-active .preview-side.blue .preview-score {
+            text-shadow: 0 0 10px #ffffff, 0 0 22px #70A2FF, 0 0 45px #2664FF;
+        }
+        .preview-active .preview-side.red {
+            background: radial-gradient(circle at center, #ff3b3b 0%, #d81515 60%, #8a0a0a 100%) !important;
+            box-shadow: inset 0 0 25px rgba(255, 160, 160, 0.85);
+        }
+        .preview-active .preview-side.red .preview-score {
+            text-shadow: 0 0 10px #ffffff, 0 0 22px #FFA0A0, 0 0 45px #FF2A2A;
+        }
+
+        /* ===== SCOREBOARD MAIN CONTAINER ===== */
+        #scoreboard {
+            padding: 0;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: stretch;
+            background: #000;
+        }
+
+        /* Scoreboard Top Bar (Floating Liquid Glass Chassis) */
+        .scoreboard-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px;
+            background: linear-gradient(180deg, rgba(28, 28, 34, 0.94) 0%, rgba(12, 12, 16, 0.88) 100%);
+            min-height: 52px;
+            gap: 10px;
+            padding-top: max(6px, env(safe-area-inset-top));
+            padding-left: max(16px, env(safe-area-inset-left));
+            padding-right: max(16px, env(safe-area-inset-right));
+            flex-shrink: 0;
+            z-index: 15;
+            border-bottom: 1.2px solid rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(35px) saturate(220%);
+            -webkit-backdrop-filter: blur(35px) saturate(220%);
+            box-shadow:
+                inset 0 1.5px 1px rgba(255,255,255,0.6),
+                0 10px 30px rgba(0,0,0,0.6);
+        }
+
+        .topbar-left, .topbar-right {
+            display: flex; align-items: center; gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .topbar-center {
+            display: flex; align-items: center; gap: 12px;
+            justify-content: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Cut-Crystal Liquid Glass Timer Pill */
+        .timer-glass-pill {
+            position: relative;
+            display: flex; align-items: center; gap: 10px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(180, 220, 255, 0.18) 100%);
+            border: 1.2px solid rgba(255, 255, 255, 0.45);
+            padding: 5px 16px;
+            border-radius: 22px;
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            box-shadow:
+                inset 0 1.5px 1px rgba(255, 255, 255, 0.9),
+                inset 0 -1.5px 2px rgba(0, 0, 0, 0.45),
+                0 6px 18px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+        .timer-glass-pill::before {
+            content: '';
+            position: absolute;
+            top: 1px; left: 2px; right: 2px;
+            height: 48%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, transparent 100%);
+            border-radius: 18px 18px 45px 45px / 18px 18px 18px 18px;
+            pointer-events: none;
+        }
+
+        .timer-display {
+            font-size: 24px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            font-family: 'SF Mono', 'Menlo', monospace;
+            letter-spacing: 1px;
+            color: #FFFFFF;
+            text-shadow: 0 0 12px rgba(255,255,255,0.45);
+        }
+
+        .timer-btn {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.22);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.12s ease, background 0.12s ease;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.75);
+        }
+        .timer-btn:active { transform: scale(0.88); background: rgba(255, 255, 255, 0.45); }
+
+        .teams-container {
+            display: flex;
+            flex: 1;
+            gap: 2px;
+            min-height: 0;
+            background: #000;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* ===== TEAM SCORE AREA (WITH CURVED GLASS SHIELD GLOSS) ===== */
+        .team-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: filter 0.1s ease, background 0.3s ease, box-shadow 0.3s ease;
+            gap: 4px;
+            box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.4);
+        }
+        .team-area:active {
+            filter: brightness(0.88);
+        }
+
+        /* Curved Specular Glass Glare Shield on the Team Area */
+        .team-area::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 40%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.06) 60%, transparent 100%);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Safe margins for far-left and far-right teams (Dynamic Island / Notch protection) */
+        .teams-container > .team-area:first-child {
+            padding-left: max(0px, env(safe-area-inset-left));
+        }
+        .teams-container > .team-area:last-child {
+            padding-right: max(0px, env(safe-area-inset-right));
+        }
+
+        /* Standard Solid Athletic Colors (Glow OFF) */
+        .team-blue { background: var(--blue-flat); }
+        .team-red { background: var(--red-flat); }
+        .team-green { background: var(--green-flat); }
+        .team-yellow { background: var(--yellow-flat); }
+
+        /* Liquid Glass Team Badges with Top Meniscus */
+        .team-name-badge {
+            position: absolute;
+            top: 14px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(0, 0, 0, 0.45) 100%);
+            border: 1.2px solid rgba(255, 255, 255, 0.45);
+            border-radius: 16px;
+            padding: 5px 20px;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 2.2px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: #FFFFFF;
+            box-shadow:
+                inset 0 1.2px 1px rgba(255, 255, 255, 0.85),
+                0 6px 16px rgba(0, 0, 0, 0.4);
+            z-index: 6;
+        }
+
+        /* Huge Score Typography */
+        .team-score {
+            font-weight: 900;
+            color: #FFFFFF;
+            text-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+            transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), text-shadow 0.3s ease;
+            line-height: 1;
+            margin-top: 8px;
+            z-index: 4;
+        }
+        .team-score.pop {
+            transform: scale(1.22);
+        }
+
+        /* Liquid Glass Tap Hint Pill */
+        .team-tap-hint {
+            font-size: 20px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.8);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(0, 0, 0, 0.4) 100%);
+            border: 1.2px solid rgba(255, 255, 255, 0.35);
+            border-radius: 14px;
+            padding: 4px 18px;
+            position: absolute;
+            bottom: 14px;
+            letter-spacing: 1.2px;
+            backdrop-filter: blur(16px);
+            box-shadow:
+                inset 0 1.2px 1px rgba(255, 255, 255, 0.7),
+                0 6px 14px rgba(0, 0, 0, 0.35);
+            z-index: 6;
+        }
+
+        /* ==========================================================================
+           🌟 TEAM COLOR GLOW (Rich Radial Aura + True Neon Text Glow)
+           ========================================================================== */
+        
+        /* BLUE GLOW */
+        .glow-active.team-blue {
+            background: radial-gradient(circle at center, #2e6eff 0%, #1545d8 60%, #0a258a 100%) !important;
+            box-shadow: inset 0 0 85px rgba(112, 162, 255, 0.7), 0 0 40px rgba(38, 100, 255, 0.45);
+            border: 1.5px solid rgba(160, 200, 255, 0.5);
+        }
+        .glow-active.team-blue .team-score {
+            text-shadow:
+                0 0 10px #FFFFFF,
+                0 0 25px var(--blue-bright),
+                0 0 60px var(--blue-core),
+                0 0 100px var(--blue-core),
+                0 0 140px var(--blue-ambient);
+            filter: drop-shadow(0 0 22px var(--blue-core));
+        }
+        .glow-active.team-blue .team-name-badge {
+            border-color: rgba(112, 162, 255, 0.85);
+            box-shadow: 0 0 18px rgba(38, 100, 255, 0.75), inset 0 1px 1px rgba(255,255,255,0.85);
+        }
+
+        /* RED GLOW */
+        .glow-active.team-red {
+            background: radial-gradient(circle at center, #ff3b3b 0%, #d81515 60%, #8a0a0a 100%) !important;
+            box-shadow: inset 0 0 85px rgba(255, 160, 160, 0.7), 0 0 40px rgba(255, 42, 42, 0.45);
+            border: 1.5px solid rgba(255, 170, 170, 0.5);
+        }
+        .glow-active.team-red .team-score {
+            text-shadow:
+                0 0 10px #FFFFFF,
+                0 0 25px var(--red-bright),
+                0 0 60px var(--red-core),
+                0 0 100px var(--red-core),
+                0 0 140px var(--red-ambient);
+            filter: drop-shadow(0 0 22px var(--red-core));
+        }
+        .glow-active.team-red .team-name-badge {
+            border-color: rgba(255, 160, 160, 0.85);
+            box-shadow: 0 0 18px rgba(255, 42, 42, 0.75), inset 0 1px 1px rgba(255,255,255,0.85);
+        }
+
+        /* GREEN GLOW */
+        .glow-active.team-green {
+            background: radial-gradient(circle at center, #2fe069 0%, #17ad47 60%, #0a6b28 100%) !important;
+            box-shadow: inset 0 0 85px rgba(136, 255, 172, 0.7), 0 0 40px rgba(29, 216, 80, 0.45);
+            border: 1.5px solid rgba(160, 255, 190, 0.5);
+        }
+        .glow-active.team-green .team-score {
+            text-shadow:
+                0 0 10px #FFFFFF,
+                0 0 25px var(--green-bright),
+                0 0 60px var(--green-core),
+                0 0 100px var(--green-core),
+                0 0 140px var(--green-ambient);
+            filter: drop-shadow(0 0 22px var(--green-core));
+        }
+        .glow-active.team-green .team-name-badge {
+            border-color: rgba(136, 255, 172, 0.85);
+            box-shadow: 0 0 18px rgba(29, 216, 80, 0.75), inset 0 1px 1px rgba(255,255,255,0.85);
+        }
+
+        /* YELLOW GLOW */
+        .glow-active.team-yellow {
+            background: radial-gradient(circle at center, #ffd629 0%, #d8ad11 60%, #856a05 100%) !important;
+            box-shadow: inset 0 0 85px rgba(255, 242, 148, 0.7), 0 0 40px rgba(255, 212, 31, 0.45);
+            border: 1.5px solid rgba(255, 245, 160, 0.5);
+        }
+        .glow-active.team-yellow .team-score {
+            text-shadow:
+                0 0 10px #FFFFFF,
+                0 0 25px var(--yellow-bright),
+                0 0 60px var(--yellow-core),
+                0 0 100px var(--yellow-core),
+                0 0 140px var(--yellow-ambient);
+            filter: drop-shadow(0 0 22px var(--yellow-core));
+        }
+        .glow-active.team-yellow .team-name-badge {
+            border-color: rgba(255, 242, 148, 0.85);
+            box-shadow: 0 0 18px rgba(255, 212, 31, 0.75), inset 0 1px 1px rgba(255,255,255,0.85);
+        }
+
+        /* ===== SCORE HISTORY SCREEN ===== */
+        #scoreHistory {
+            justify-content: flex-start;
+            padding-top: max(72px, calc(env(safe-area-inset-top) + 52px));
+            padding-bottom: max(28px, env(safe-area-inset-bottom));
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            background: #000;
+        }
+        .history-list {
+            width: min(520px, 92vw);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding-bottom: 32px;
+            z-index: 5;
+        }
+        .history-card {
+            position: relative;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 40%, rgba(24, 24, 28, 0.9) 100%);
+            border: 1.2px solid rgba(255, 255, 255, 0.28);
+            border-radius: 22px;
+            padding: 18px;
+            backdrop-filter: blur(35px) saturate(210%);
+            -webkit-backdrop-filter: blur(35px) saturate(210%);
+            box-shadow:
+                inset 0 1.8px 1px rgba(255, 255, 255, 0.7),
+                inset 0 -1.5px 2px rgba(0,0,0,0.45),
+                0 14px 35px rgba(0,0,0,0.55);
+            overflow: hidden;
+        }
+        .history-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 38%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+            pointer-events: none;
+        }
+        .history-header {
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            color: rgba(235, 235, 245, 0.6);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .history-score-row {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            gap: 12px;
+            position: relative;
+            z-index: 2;
+        }
+        .history-color-dot {
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.6);
+        }
+        .history-team-name {
+            flex: 1;
+            font-size: 17px;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+        .history-score-val {
+            font-size: 20px;
+            font-weight: 800;
+            color: #FFFFFF;
+        }
+        .history-empty {
+            color: rgba(235, 235, 245, 0.4);
+            font-size: 17px;
+            font-weight: 500;
+            text-align: center;
+            margin-top: 60px;
+            z-index: 5;
+        }
+
+        /* ===== RESET CONFIRMATION DIALOG ===== */
+        .dialog-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            transition: opacity 0.2s ease;
+        }
+        .dialog-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+        .dialog-box {
+            position: relative;
+            background: linear-gradient(135deg, rgba(38, 38, 44, 0.96) 0%, rgba(22, 22, 26, 0.96) 100%);
+            border: 1.2px solid rgba(255, 255, 255, 0.35);
+            border-radius: 24px;
+            padding: 24px;
+            width: min(320px, 84vw);
+            text-align: center;
+            box-shadow:
+                inset 0 1.8px 1px rgba(255, 255, 255, 0.7),
+                0 24px 55px rgba(0,0,0,0.75);
+            overflow: hidden;
+        }
+        .dialog-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 38%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+            pointer-events: none;
+        }
+        .dialog-title {
+            font-size: 19px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: #FFFFFF;
+            position: relative;
+            z-index: 2;
+        }
+        .dialog-msg {
+            font-size: 14px;
+            color: rgba(235, 235, 245, 0.68);
+            margin-bottom: 22px;
+            line-height: 1.4;
+            position: relative;
+            z-index: 2;
+        }
+        .dialog-buttons {
+            display: flex; gap: 10px;
+            position: relative;
+            z-index: 2;
+        }
+        .dialog-btn {
+            flex: 1;
+            padding: 13px;
+            border-radius: 14px;
+            border: none;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.12s ease, transform 0.12s ease;
+        }
+        .dialog-btn:active { opacity: 0.75; transform: scale(0.96); }
+        .dialog-btn-cancel {
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #FFFFFF;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.4);
+        }
+        .dialog-btn-danger {
+            background: linear-gradient(180deg, #FF453A 0%, #D70015 100%);
+            border: 1px solid rgba(255, 120, 120, 0.4);
+            color: #FFFFFF;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 12px rgba(255, 69, 58, 0.4);
+        }
+
+        /* ===== RESPONSIVE TYPOGRAPHY ===== */
+        @media (orientation: portrait) {
+            .team-score { font-size: min(24vw, 110px); }
+        }
+        @media (orientation: landscape) {
+            .team-score { font-size: min(34vh, 170px); }
+        }
+        @media (orientation: landscape) and (max-height: 420px) {
+            .scoreboard-topbar { min-height: 44px; padding: 4px 12px; }
+            .timer-display { font-size: 20px; }
+            .team-name-badge { font-size: 13px; padding: 3px 14px; top: 8px; }
+            .team-tap-hint { font-size: 16px; padding: 3px 12px; bottom: 8px; }
+            .team-score { margin-top: 4px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Ambient Liquid Orbs in Background (Creates Rich Glass Refractions) -->
+<div class="ambient-glass-glows">
+    <div class="glow-orb orb-red"></div>
+    <div class="glow-orb orb-blue"></div>
+    <div class="glow-orb orb-violet"></div>
+</div>
+
+<!-- ===== MAIN MENU ===== -->
+<div id="mainMenu" class="screen active">
+    <div class="menu-title-container">
+        <div class="menu-badge">iPhone Scoreboard</div>
+        <div class="menu-title">SCOREBOARD</div>
+    </div>
+    <div class="menu-buttons">
+        <button class="glass-btn" onclick="navigateTo('teamSelection')">
+            START
+            <span class="glass-btn-bounce"></span>
+        </button>
+        <button class="glass-btn" onclick="navigateTo('settings')">
+            SETTINGS
+            <span class="glass-btn-bounce"></span>
+        </button>
+    </div>
+</div>
+
+<!-- ===== TEAM SELECTION ===== -->
+<div id="teamSelection" class="screen">
+    <div class="nav-header">
+        <button class="glass-btn-small" onclick="goBack()">◀ Back</button>
+        <span class="nav-header-title">Mode</span>
+        <div style="width:60px"></div>
+    </div>
+    <div class="selection-title">SELECT TEAMS</div>
+    <div class="selection-buttons">
+        <button class="glass-btn" onclick="startGame(2)">
+            2 TEAMS
+            <span class="glass-btn-bounce"></span>
+        </button>
+        <button class="glass-btn" onclick="startGame(4)">
+            4 TEAMS
+            <span class="glass-btn-bounce"></span>
+        </button>
+    </div>
+</div>
+
+<!-- ===== SETTINGS (APPLE iOS 18 STYLE) ===== -->
+<div id="settings" class="screen">
+    <div class="nav-header">
+        <button class="glass-btn-small" onclick="goBack()">◀ Back</button>
+        <span class="nav-header-title">Settings</span>
+        <div style="width:60px"></div>
+    </div>
+
+    <div class="settings-scroll-container">
+        <!-- Section 1: Display & Visuals -->
+        <div>
+            <div class="settings-section-title">Visual Effects</div>
+            <div class="settings-group">
+                <!-- Team Glow Toggle -->
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-icon-badge icon-glow-badge">✨</div>
+                        <div class="setting-texts">
+                            <div class="setting-title">Team Color Glow</div>
+                            <div class="setting-subtitle">Radiant neon aura and luminous numbers</div>
+                        </div>
+                    </div>
+                    <div class="ios-toggle" id="toggleGlow" onclick="toggleSetting('glow')">
+                        <div class="ios-toggle-knob"></div>
+                    </div>
+                </div>
+
+                <!-- Live Glow Preview directly in Settings -->
+                <div class="glow-preview-box">
+                    <div class="glow-preview-label">Live Preview</div>
+                    <div class="preview-mini-stage" id="previewStage">
+                        <div class="preview-side blue">
+                            <span class="preview-tag">BLUE</span>
+                            <span class="preview-score">7</span>
+                        </div>
+                        <div class="preview-side red">
+                            <span class="preview-tag">RED</span>
+                            <span class="preview-score">4</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Match Controls -->
+        <div>
+            <div class="settings-section-title">Gameplay</div>
+            <div class="settings-group">
+                <!-- Timer Toggle -->
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-icon-badge icon-timer-badge">⏱</div>
+                        <div class="setting-texts">
+                            <div class="setting-title">Match Timer</div>
+                            <div class="setting-subtitle">Top digital clock with start & pause</div>
+                        </div>
+                    </div>
+                    <div class="ios-toggle" id="toggleTimer" onclick="toggleSetting('timer')">
+                        <div class="ios-toggle-knob"></div>
+                    </div>
+                </div>
+
+                <!-- Reset Confirmation Toggle -->
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-icon-badge icon-reset-badge">⚠️</div>
+                        <div class="setting-texts">
+                            <div class="setting-title">Confirm Before Reset</div>
+                            <div class="setting-subtitle">Prevent accidental score resets</div>
+                        </div>
+                    </div>
+                    <div class="ios-toggle" id="toggleConfirm" onclick="toggleSetting('confirm')">
+                        <div class="ios-toggle-knob"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Audio & Feedback -->
+        <div>
+            <div class="settings-section-title">Audio & Feedback</div>
+            <div class="settings-group">
+                <!-- Sound Effects Toggle -->
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-icon-badge icon-sound-badge">🔊</div>
+                        <div class="setting-texts">
+                            <div class="setting-title">Score Tap Sounds</div>
+                            <div class="setting-subtitle">Crisp Apple-style audio click on tap</div>
+                        </div>
+                    </div>
+                    <div class="ios-toggle" id="toggleSound" onclick="toggleSetting('sound')">
+                        <div class="ios-toggle-knob"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Device Info -->
+        <div>
+            <div class="settings-section-title">About</div>
+            <div class="settings-group">
+                <div class="setting-row">
+                    <div class="setting-texts">
+                        <div class="setting-title">Scoreboard for iPhone</div>
+                        <div class="setting-subtitle">Liquid Glass Engine • iOS 18 Design</div>
+                    </div>
+                    <span style="font-size:14px; color:rgba(255,255,255,0.4); font-weight:700;">v1.4</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== SCOREBOARD ===== -->
+<div id="scoreboard" class="screen">
+    <div class="scoreboard-topbar">
+        <div class="topbar-left">
+            <button class="glass-btn-small" onclick="goBack()">◀ Back</button>
+        </div>
+        <div class="topbar-center" id="timerSection" style="display:none;">
+            <div class="timer-glass-pill">
+                <span class="timer-display" id="timerDisplay">00:00</span>
+                <button class="timer-btn" id="timerPlayPause" onclick="toggleTimer()">▶</button>
+                <button class="timer-btn" onclick="resetTimer()">↺</button>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <button class="glass-btn-small" onclick="navigateTo('scoreHistory')">☰ Scores</button>
+            <button class="glass-btn-small" onclick="handleResetRequest()">↺ Reset</button>
+        </div>
+    </div>
+    <div class="teams-container" id="teamsContainer"></div>
+</div>
+
+<!-- ===== SCORE HISTORY ===== -->
+<div id="scoreHistory" class="screen">
+    <div class="nav-header">
+        <button class="glass-btn-small" onclick="goBack()">◀ Back</button>
+        <span class="nav-header-title">Score History</span>
+        <div style="width:60px"></div>
+    </div>
+    <div class="history-list" id="historyList"></div>
+</div>
+
+<!-- ===== RESET DIALOG ===== -->
+<div class="dialog-overlay" id="resetDialog">
+    <div class="dialog-box">
+        <div class="dialog-title">Reset Scores?</div>
+        <div class="dialog-msg">Current match scores will be saved to your session history.</div>
+        <div class="dialog-buttons">
+            <button class="dialog-btn dialog-btn-cancel" onclick="hideResetDialog()">Cancel</button>
+            <button class="dialog-btn dialog-btn-danger" onclick="confirmReset()">Reset</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== AUDIO ENGINE =====
+const audio = {
+    ctx: null,
+    playTap() {
+        if (!state.soundEnabled) return;
+        try {
+            if (!this.ctx) {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(540, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.07);
+            gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.07);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.07);
+        } catch (e) {}
+    }
+};
+
+// ===== INTERACTIVE LIQUID RIPPLE EFFECT =====
+function spawnLiquidRipple(event, element) {
+    const rect = element.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    ripple.className = 'liquid-ripple';
+
+    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+
+    const diameter = Math.max(rect.width, rect.height);
+    const radius = diameter / 2;
+
+    ripple.style.width = ripple.style.height = `${diameter}px`;
+    ripple.style.left = `${(clientX || (rect.left + rect.width / 2)) - rect.left - radius}px`;
+    ripple.style.top = `${(clientY || (rect.top + rect.height / 2)) - rect.top - radius}px`;
+
+    element.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+}
+
+// Attach liquid ripple to all glass buttons
+document.addEventListener('pointerdown', (e) => {
+    const btn = e.target.closest('.glass-btn, .glass-btn-small');
+    if (btn) {
+        spawnLiquidRipple(e, btn);
+    }
+});
+
+// ===== STATE MANAGEMENT =====
+const teamMeta = {
+    blue:   { name: 'BLUE',   className: 'team-blue',   hex: '#2664FF' },
+    red:    { name: 'RED',    className: 'team-red',    hex: '#FF2A2A' },
+    green:  { name: 'GREEN',  className: 'team-green',  hex: '#1DD850' },
+    yellow: { name: 'YELLOW', className: 'team-yellow', hex: '#FFD41F' }
+};
+
+const state = {
+    currentScreen: 'mainMenu',
+    teamCount: 2,
+    scores: {},
+    scoreHistory: [],
+    // Persistent Settings
+    timerEnabled: localStorage.getItem('timerEnabled') === 'true',
+    glowEnabled: localStorage.getItem('glowEnabled') === 'true',
+    soundEnabled: localStorage.getItem('soundEnabled') !== 'false', // Default ON
+    confirmResetEnabled: localStorage.getItem('confirmResetEnabled') !== 'false', // Default ON
+    // Timer
+    timer: { elapsed: 0, running: false, startTime: null, accumulated: 0, rafId: null }
+};
+
+// ===== NAVIGATION =====
+function navigateTo(screen) {
+    const oldEl = document.getElementById(state.currentScreen);
+    const newEl = document.getElementById(screen);
+    if (!oldEl || !newEl || screen === state.currentScreen) return;
+
+    state.currentScreen = screen;
+    oldEl.classList.remove('active');
+    oldEl.classList.add('fade-out');
+    setTimeout(() => oldEl.classList.remove('fade-out'), 300);
+
+    newEl.classList.add('active');
+
+    if (screen === 'scoreboard') updateScoreboard();
+    if (screen === 'scoreHistory') renderHistory();
+    if (screen === 'settings') updateToggles();
+}
+
+function goBack() {
+    const map = {
+        settings: 'mainMenu',
+        teamSelection: 'mainMenu',
+        scoreboard: 'teamSelection',
+        scoreHistory: 'scoreboard'
+    };
+    const target = map[state.currentScreen];
+    if (target) navigateTo(target);
+}
+
+// ===== GAME LOGIC =====
+function getTeams(count) {
+    return count === 4
+        ? ['blue', 'red', 'green', 'yellow']
+        : ['blue', 'red'];
+}
+
+function startGame(count) {
+    state.teamCount = count;
+    state.scores = {};
+    getTeams(count).forEach(t => state.scores[t] = 0);
+    resetTimer();
+    navigateTo('scoreboard');
+}
+
+function incrementScore(team, event) {
+    state.scores[team] = (state.scores[team] || 0) + 1;
+    audio.playTap();
+
+    const teamArea = document.querySelector(`.team-area.${teamMeta[team].className}`);
+    if (teamArea && event) {
+        spawnLiquidRipple(event, teamArea);
+    }
+
+    const el = document.getElementById('score-' + team);
+    if (el) {
+        el.textContent = state.scores[team];
+        el.classList.add('pop');
+        setTimeout(() => el.classList.remove('pop'), 140);
+    }
+}
+
+// Touch protection against simulated mouse clicks
+let isTouchDevice = false;
+function handleScoreTouch(e, team) {
+    isTouchDevice = true;
+    if (e.cancelable) e.preventDefault();
+    incrementScore(team, e);
+}
+
+function handleScoreClick(e, team) {
+    if (isTouchDevice) return;
+    incrementScore(team, e);
+}
+
+// ===== RESET LOGIC =====
+function handleResetRequest() {
+    if (state.confirmResetEnabled) {
+        showResetDialog();
+    } else {
+        confirmReset();
+    }
+}
+
+function showResetDialog() {
+    document.getElementById('resetDialog').classList.add('show');
+}
+
+function hideResetDialog() {
+    document.getElementById('resetDialog').classList.remove('show');
+}
+
+function confirmReset() {
+    hideResetDialog();
+
+    const teams = getTeams(state.teamCount);
+    const hasScores = teams.some(t => state.scores[t] > 0);
+    if (hasScores) {
+        state.scoreHistory.push({
+            teamCount: state.teamCount,
+            scores: teams.map(t => ({ team: t, score: state.scores[t] })),
+            timestamp: new Date()
+        });
+    }
+
+    teams.forEach(t => state.scores[t] = 0);
+    resetTimer();
+    updateScoreboard();
+}
+
+// ===== TIMER LOGIC =====
+function toggleTimer() {
+    if (state.timer.running) pauseTimer();
+    else startTimerClock();
+}
+
+function startTimerClock() {
+    state.timer.running = true;
+    state.timer.startTime = performance.now();
+    updateTimerBtn();
+    tickTimer();
+}
+
+function pauseTimer() {
+    state.timer.running = false;
+    state.timer.accumulated += (performance.now() - state.timer.startTime) / 1000;
+    state.timer.startTime = null;
+    if (state.timer.rafId) cancelAnimationFrame(state.timer.rafId);
+    updateTimerBtn();
+}
+
+function resetTimer() {
+    if (state.timer.running) {
+        state.timer.running = false;
+        if (state.timer.rafId) cancelAnimationFrame(state.timer.rafId);
+    }
+    state.timer.elapsed = 0;
+    state.timer.accumulated = 0;
+    state.timer.startTime = null;
+    updateTimerDisplay();
+    updateTimerBtn();
+}
+
+function tickTimer() {
+    if (!state.timer.running) return;
+    const now = performance.now();
+    state.timer.elapsed = state.timer.accumulated + (now - state.timer.startTime) / 1000;
+    updateTimerDisplay();
+    state.timer.rafId = requestAnimationFrame(tickTimer);
+}
+
+function updateTimerDisplay() {
+    const el = document.getElementById('timerDisplay');
+    if (!el) return;
+    const total = Math.floor(state.timer.elapsed);
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    el.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function updateTimerBtn() {
+    const btn = document.getElementById('timerPlayPause');
+    if (btn) btn.textContent = state.timer.running ? '⏸' : '▶';
+}
+
+// ===== SETTINGS & PREVIEW =====
+function toggleSetting(key) {
+    if (key === 'timer') {
+        state.timerEnabled = !state.timerEnabled;
+        localStorage.setItem('timerEnabled', state.timerEnabled);
+    } else if (key === 'glow') {
+        state.glowEnabled = !state.glowEnabled;
+        localStorage.setItem('glowEnabled', state.glowEnabled);
+    } else if (key === 'sound') {
+        state.soundEnabled = !state.soundEnabled;
+        localStorage.setItem('soundEnabled', state.soundEnabled);
+    } else if (key === 'confirm') {
+        state.confirmResetEnabled = !state.confirmResetEnabled;
+        localStorage.setItem('confirmResetEnabled', state.confirmResetEnabled);
+    }
+    updateToggles();
+}
+
+function updateToggles() {
+    const tTimer = document.getElementById('toggleTimer');
+    const tGlow = document.getElementById('toggleGlow');
+    const tSound = document.getElementById('toggleSound');
+    const tConfirm = document.getElementById('toggleConfirm');
+    const preview = document.getElementById('previewStage');
+
+    if (tTimer) tTimer.classList.toggle('on', state.timerEnabled);
+    if (tGlow) tGlow.classList.toggle('on', state.glowEnabled);
+    if (tSound) tSound.classList.toggle('on', state.soundEnabled);
+    if (tConfirm) tConfirm.classList.toggle('on', state.confirmResetEnabled);
+
+    // Update live preview in settings
+    if (preview) {
+        preview.classList.toggle('preview-active', state.glowEnabled);
+    }
+}
+
+// ===== RENDER SCOREBOARD =====
+function updateScoreboard() {
+    const container = document.getElementById('teamsContainer');
+    const timerSection = document.getElementById('timerSection');
+
+    timerSection.style.display = state.timerEnabled ? 'flex' : 'none';
+
+    const teams = getTeams(state.teamCount);
+    const glowClass = state.glowEnabled ? 'glow-active' : '';
+
+    container.innerHTML = teams.map(t => {
+        const meta = teamMeta[t];
+        return `
+            <div class="team-area ${meta.className} ${glowClass}"
+                 ontouchstart="handleScoreTouch(event, '${t}')"
+                 onmousedown="handleScoreClick(event, '${t}')">
+                <div class="team-name-badge">${meta.name}</div>
+                <div class="team-score" id="score-${t}">${state.scores[t] || 0}</div>
+                <div class="team-tap-hint">+1</div>
+            </div>
+        `;
+    }).join('');
+
+    updateTimerDisplay();
+    updateTimerBtn();
+}
+
+// ===== RENDER HISTORY =====
+function renderHistory() {
+    const list = document.getElementById('historyList');
+    if (state.scoreHistory.length === 0) {
+        list.innerHTML = '<div class="history-empty">No previous matches recorded yet.</div>';
+        return;
+    }
+
+    list.innerHTML = [...state.scoreHistory].reverse().map(result => {
+        const time = result.timestamp.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        const rows = result.scores.map(s => {
+            const meta = teamMeta[s.team];
+            return `
+                <div class="history-score-row">
+                    <div class="history-color-dot" style="background:${meta.hex}"></div>
+                    <div class="history-team-name">${meta.name}</div>
+                    <div class="history-score-val">${s.score}</div>
+                </div>
+            `;
+        }).join('');
+        return `
+            <div class="history-card">
+                <div class="history-header">${result.teamCount} Teams Match • ${time}</div>
+                ${rows}
+            </div>
+        `;
+    }).join('');
+}
+
+// Initial state setup
+updateToggles();
+
+// Register Service Worker for offline PWA
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+
+</body>
+</html>

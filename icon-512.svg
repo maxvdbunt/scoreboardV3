@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Rich Red Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF334B" />
+      <stop offset="50%" stop-color="#E50926" />
+      <stop offset="100%" stop-color="#990012" />
+    </linearGradient>
+
+    <!-- Subtle Red Ambient Glow -->
+    <radialGradient id="ambientGlow" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#FFA8B2" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#E50926" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Liquid Glass Gradient for the '3' -->
+    <linearGradient id="glassGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95" />
+      <stop offset="30%" stop-color="#FFFFFF" stop-opacity="0.75" />
+      <stop offset="70%" stop-color="#FFFFFF" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.65" />
+    </linearGradient>
+
+    <!-- Inner Shadow & Highlight Filters -->
+    <filter id="glassShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#4A0008" flood-opacity="0.55" />
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.35" />
+    </filter>
+
+    <linearGradient id="edgeGleam" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8" />
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.1" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.4" />
+    </linearGradient>
+  </defs>
+
+  <!-- App Icon Base Background -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGrad)" />
+  <rect width="512" height="512" rx="115" fill="url(#ambientGlow)" />
+
+  <!-- Glass Light Rim Reflection -->
+  <rect x="6" y="6" width="500" height="500" rx="110" fill="none" stroke="url(#edgeGleam)" stroke-width="2.5" opacity="0.4" />
+
+  <!-- Liquid Glass "3" -->
+  <g filter="url(#glassShadow)">
+    <text x="256" y="375"
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+          font-size="360"
+          font-weight="900"
+          text-anchor="middle"
+          fill="url(#glassGrad)"
+          letter-spacing="-10">3</text>
+  </g>
+
+  <!-- Specular Reflection Overlay for Glass Sheen -->
+  <path d="M 120 100 Q 256 60 392 100 Q 300 240 120 100 Z"
+        fill="white"
+        opacity="0.12" />
+</svg>
