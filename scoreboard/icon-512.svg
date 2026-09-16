@@ -1,59 +1,119 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Rich Red Background Gradient -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF334B" />
-      <stop offset="50%" stop-color="#E50926" />
-      <stop offset="100%" stop-color="#990012" />
+    <!-- Deep Luxurious Apple Red Gradient -->
+    <linearGradient id="appleRedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF2E4D" />
+      <stop offset="35%" stop-color="#E60D28" />
+      <stop offset="70%" stop-color="#BD041B" />
+      <stop offset="100%" stop-color="#73000E" />
     </linearGradient>
 
-    <!-- Subtle Red Ambient Glow -->
-    <radialGradient id="ambientGlow" cx="50%" cy="30%" r="60%">
-      <stop offset="0%" stop-color="#FFA8B2" stop-opacity="0.4" />
-      <stop offset="100%" stop-color="#E50926" stop-opacity="0" />
+    <!-- Ambient Studio Light Bloom -->
+    <radialGradient id="ambientGlow" cx="50%" cy="25%" r="70%">
+      <stop offset="0%" stop-color="#FFA8B4" stop-opacity="0.32" />
+      <stop offset="60%" stop-color="#E60D28" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#73000E" stop-opacity="0" />
     </radialGradient>
 
-    <!-- Liquid Glass Gradient for the '3' -->
-    <linearGradient id="glassGrad" x1="20%" y1="0%" x2="80%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95" />
-      <stop offset="30%" stop-color="#FFFFFF" stop-opacity="0.75" />
-      <stop offset="70%" stop-color="#FFFFFF" stop-opacity="0.25" />
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.65" />
+    <!-- Outer Squircle Glass Rim Gleam -->
+    <linearGradient id="iconRimGleam" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8" />
+      <stop offset="30%" stop-color="#FFA0B0" stop-opacity="0.25" />
+      <stop offset="70%" stop-color="#80D0FF" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.5" />
     </linearGradient>
 
-    <!-- Inner Shadow & Highlight Filters -->
-    <filter id="glassShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#4A0008" flood-opacity="0.55" />
-      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.35" />
+    <!-- Physical 3D Liquid Glass Caustic Shadow Filter -->
+    <filter id="liquidGlassShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <!-- Tight contact shadow for physical weight -->
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#380005" flood-opacity="0.85" />
+      <!-- Soft ambient shadow -->
+      <feDropShadow dx="0" dy="24" stdDeviation="18" flood-color="#1F0003" flood-opacity="0.6" />
+      <!-- Inner refractive caustic glow -->
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#7A000E" flood-opacity="0.5" />
     </filter>
 
-    <linearGradient id="edgeGleam" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8" />
-      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.1" />
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.4" />
+    <!-- Liquid Glass Body (Refractive Core - Red shines through!) -->
+    <linearGradient id="glassBodyGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95" />
+      <stop offset="22%" stop-color="#FFFFFF" stop-opacity="0.65" />
+      <stop offset="50%" stop-color="#FFC5CE" stop-opacity="0.22" />
+      <stop offset="78%" stop-color="#FFFFFF" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.85" />
     </linearGradient>
+
+    <!-- Prismatic Rainbow Glass Rim (Light Dispersion on the edges) -->
+    <linearGradient id="prismaticRimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1" />
+      <stop offset="35%" stop-color="#FFB0C0" stop-opacity="0.7" />
+      <stop offset="65%" stop-color="#8CD8FF" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.9" />
+    </linearGradient>
+
+    <!-- Upper Curved Specular Meniscus Highlight -->
+    <linearGradient id="meniscusGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8" />
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Clip Path for the '3' shape -->
+    <clipPath id="threeClip">
+      <text x="256" y="380"
+            font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+            font-size="370"
+            font-weight="900"
+            text-anchor="middle"
+            letter-spacing="-12">3</text>
+    </clipPath>
   </defs>
 
-  <!-- App Icon Base Background -->
-  <rect width="512" height="512" rx="115" fill="url(#bgGrad)" />
-  <rect width="512" height="512" rx="115" fill="url(#ambientGlow)" />
+  <!-- Base App Icon Tile -->
+  <rect width="512" height="512" rx="118" fill="url(#appleRedGrad)" />
+  <rect width="512" height="512" rx="118" fill="url(#ambientGlow)" />
 
-  <!-- Glass Light Rim Reflection -->
-  <rect x="6" y="6" width="500" height="500" rx="110" fill="none" stroke="url(#edgeGleam)" stroke-width="2.5" opacity="0.4" />
+  <!-- Ultra-fine Glass Bevel along outer squircle perimeter -->
+  <rect x="1.5" y="1.5" width="509" height="509" rx="116.5" fill="none" stroke="url(#iconRimGleam)" stroke-width="2" opacity="0.4" />
 
-  <!-- Liquid Glass "3" -->
-  <g filter="url(#glassShadow)">
-    <text x="256" y="375"
-          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
-          font-size="360"
+  <!-- ==========================================================================
+       🧊 LIQUID GLASS "3" (Sculpted Optical Crystal Glass)
+       ========================================================================== -->
+
+  <!-- Layer 1: 3D Physical Drop & Caustic Shadow -->
+  <g filter="url(#liquidGlassShadow)">
+    <text x="256" y="380"
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+          font-size="370"
           font-weight="900"
           text-anchor="middle"
-          fill="url(#glassGrad)"
-          letter-spacing="-10">3</text>
+          fill="#520008"
+          letter-spacing="-12">3</text>
   </g>
 
-  <!-- Specular Reflection Overlay for Glass Sheen -->
-  <path d="M 120 100 Q 256 60 392 100 Q 300 240 120 100 Z"
-        fill="white"
-        opacity="0.12" />
+  <!-- Layer 2: Translucent Liquid Glass Body -->
+  <text x="256" y="380"
+        font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+        font-size="370"
+        font-weight="900"
+        text-anchor="middle"
+        fill="url(#glassBodyGrad)"
+        letter-spacing="-12">3</text>
+
+  <!-- Layer 3: Prismatic Edge Bevel (Rainbow Chromatic Dispersion) -->
+  <text x="256" y="380"
+        font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+        font-size="370"
+        font-weight="900"
+        text-anchor="middle"
+        fill="none"
+        stroke="url(#prismaticRimGrad)"
+        stroke-width="3"
+        letter-spacing="-12">3</text>
+
+  <!-- Layer 4: Upper Specular Meniscus Glaze (Curved Gloss inside the '3') -->
+  <g clip-path="url(#threeClip)">
+    <rect x="80" y="80" width="352" height="150" fill="url(#meniscusGrad)" />
+    <!-- Diagonal Liquid Caustic Sheen Ray -->
+    <path d="M 120 400 L 260 80 L 330 80 L 190 400 Z" fill="white" opacity="0.16" />
+  </g>
 </svg>
